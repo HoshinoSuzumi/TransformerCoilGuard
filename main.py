@@ -1,6 +1,7 @@
 import json
 import logging
 import pprint
+import time
 from time import sleep as delay
 
 from azure.iot.device import IoTHubDeviceClient, Message
@@ -28,6 +29,7 @@ if __name__ == '__main__':
     enable_fetching = True
     voltage_data_buff = []
     current_data_buff = []
+    t_delta_sequences = []
 
     try:
         azureClient.on_message_received = fake_message_handler
@@ -36,6 +38,7 @@ if __name__ == '__main__':
             task.ai_channels.add_ai_voltage_chan("Misaka/ai0")
             task.ai_channels.add_ai_voltage_chan("Misaka/ai1")
 
+            t_start = time.time()
             while True:
                 while enable_fetching:
                     read_data = task.read()
@@ -43,12 +46,13 @@ if __name__ == '__main__':
                     data_I1 = read_data[1]
                     voltage_data_buff.append(data_U3)
                     current_data_buff.append(data_I1)
-                    # delay(0.01)
+                    t_delta_sequences.append(time.time() - t_start)
                     enable_fetching = len(voltage_data_buff) <= 600
 
                 data_dict = {
                     'voltages': voltage_data_buff,
-                    'currents': current_data_buff
+                    'currents': current_data_buff,
+                    'timeDeltaSequence': t_delta_sequences
                 }
                 data_payload = json.dumps(data_dict, default=lambda o: o.__dict__, sort_keys=True)
                 msg = Message(data_payload)
@@ -58,8 +62,10 @@ if __name__ == '__main__':
                 print('sending', msg)
                 voltage_data_buff.clear()
                 current_data_buff.clear()
+                t_delta_sequences.clear()
                 delay(600)
                 enable_fetching = True
+                t_start = time.time()
 
     except KeyboardInterrupt:
         print('Stopped')
