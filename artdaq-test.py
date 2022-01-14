@@ -1,28 +1,21 @@
 import pprint
-import time
+
+import matplotlib.pyplot as plt
 
 import artdaq
+from artdaq.constants import AcquisitionType
 
 pp = pprint.PrettyPrinter(indent=4)
 
 if __name__ == '__main__':
-
     with artdaq.Task() as task:
         task.ai_channels.add_ai_voltage_chan("Misaka/ai0")
         task.ai_channels.add_ai_voltage_chan("Misaka/ai1")
+        task.timing.cfg_samp_clk_timing(15000, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=1000)
 
-        buffer = []
+        u = task.read(number_of_samples_per_channel=1000)[0]
+        i = task.read(number_of_samples_per_channel=1000)[1]
 
-        st = time.time()
-        ed = 0
-
-        run = True
-
-        while run:
-            ed = time.time()
-            if ed - st >= 0.207:
-                run = False
-            buffer.append(task.read()[0])
-            # print('Sending %s' % task.read()[0])
-
-        print("Time: %s\nData Points: %s", (ed - st, len(buffer)))
+        plt.plot(u)
+        plt.plot(i)
+        plt.show()
