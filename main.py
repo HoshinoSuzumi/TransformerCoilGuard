@@ -51,8 +51,7 @@ if __name__ == '__main__':
 
                 data_dict = {
                     'voltages': voltage_data_buff,
-                    'currents': current_data_buff,
-                    'timeDeltaSequence': t_delta_sequences
+                    'currents': current_data_buff
                 }
                 data_payload = json.dumps(data_dict, default=lambda o: o.__dict__, sort_keys=True)
                 msg = Message(data_payload)

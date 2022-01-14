@@ -1,6 +1,8 @@
+import json
 import time
 
 import matplotlib.pyplot as plt
+from azure.iot.device import IoTHubDeviceClient, Message
 from numpy import *
 from numpy.fft import *
 
@@ -43,10 +45,34 @@ if __name__ == '__main__':
     # signal_u = 4 * sin(2 * pi * 50 * x)
     # signal_i = 0.005 * sin(2 * pi * 50 * (x + random.normal(0, 0.5, 15000)))
 
+    time_increment = 0
+
+    azureClient = IoTHubDeviceClient.create_from_connection_string(
+        'HostName=TransformerCoilGuard.azure-devices.net;DeviceId=TCG_Gateway;SharedAccessKey=rLG7ePO'
+        '+BFC60BgpdxKkX1pH3KuD0o2CUQJSxNh9CF8=')
+    print('Connecting Azure IoT Center...')
+    azureClient.connect()
+    print('Connected to Azure IoT Center')
+
     while True:
-        # 150000 data/s
+        # 15000 data/s
         U, I = acquire_ui(1000, rate=15000)
         X, Y = lissajous_figure_calc(U, I, 15000, 50, 1000)
+
+        data_dict = {
+            'lissajous': {
+                'X': X.tolist(),
+                'Y': Y.tolist()
+            },
+            'voltages': U,
+            'currents': I
+        }
+        data_payload = json.dumps(data_dict)
+        msg = Message(data_payload)
+        msg.content_type = 'application/json'
+        msg.content_encoding = 'utf-8'
+        azureClient.send_message(msg)
+        print('Sent', msg)
 
         plt.subplot(221)
         plt.title('Sampling U & I')
@@ -67,4 +93,4 @@ if __name__ == '__main__':
 
         plt.show()
 
-        time.sleep(1)
+        time.sleep(600)
