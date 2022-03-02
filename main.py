@@ -65,13 +65,29 @@ if __name__ == '__main__':
         U, I = acquire_ui(1000, rate=15000)
         X, Y = lissajous_figure_calc(U, I, 15000, 50, 1000)
 
+        # data_dict = {
+        #     'lissajous': {
+        #         'X': X.tolist(),
+        #         'Y': Y.tolist()
+        #     },
+        #     'voltages': U,
+        #     'currents': I
+        # }
         data_dict = {
             'lissajous': {
-                'X': X.tolist(),
-                'Y': Y.tolist()
-            },
-            'voltages': U,
-            'currents': I
+                "A": {
+                    "X": X.tolist(),
+                    "Y": Y.tolist()
+                },
+                "B": {
+                    "X": X.tolist(),
+                    "Y": Y.tolist()
+                },
+                "C": {
+                    "X": X.tolist(),
+                    "Y": Y.tolist()
+                }
+            }
         }
         data_payload = json.dumps(data_dict)
         msg = Message(data_payload)
