@@ -10,7 +10,13 @@ import artdaq
 from artdaq.constants import AcquisitionType
 
 
-def acquire_ui(samples, rate=15000):
+def acquire_ui(samples, rate=15000, fake_data=False):
+    if fake_data:
+        x = linspace(0, 1, rate)
+        u_sequence = 4 * sin(2 * pi * 50 * x)
+        i_sequence = 0.005 * sin(2 * pi * 50 * (x + random.normal(0, 0.5, rate)))
+        return u_sequence, i_sequence
+
     with artdaq.Task() as task:
         task.ai_channels.add_ai_voltage_chan('Misaka/ai0')
         task.ai_channels.add_ai_voltage_chan('Misaka/ai1')

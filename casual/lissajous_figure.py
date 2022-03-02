@@ -1,8 +1,6 @@
-import json
 import time
 
 import matplotlib.pyplot as plt
-from azure.iot.device import IoTHubDeviceClient, Message
 from numpy import *
 from numpy.fft import *
 
@@ -10,7 +8,13 @@ import artdaq
 from artdaq.constants import AcquisitionType
 
 
-def acquire_ui(samples, rate=15000):
+def acquire_ui(samples, rate=15000, fake_data=False):
+    if fake_data:
+        x = linspace(0, 1, rate)
+        u_sequence = 1 * sin(0.15 * pi * 50 * (x + random.normal(0, 0.5)))
+        i_sequence = 0.7 * sin(0.15 * pi * 50 * (x + random.normal(0, 0.5)))
+        return u_sequence, i_sequence
+
     with artdaq.Task() as task:
         task.ai_channels.add_ai_voltage_chan('Misaka/ai0')
         task.ai_channels.add_ai_voltage_chan('Misaka/ai1')
@@ -41,38 +45,11 @@ def lissajous_figure_calc(signal_u, signal_i, fs=1200, f1=50, n1=600):
 
 
 if __name__ == '__main__':
-    # x = linspace(0, 1, 15000)
-    # signal_u = 4 * sin(2 * pi * 50 * x)
-    # signal_i = 0.005 * sin(2 * pi * 50 * (x + random.normal(0, 0.5, 15000)))
-
-    time_increment = 0
-
-    azureClient = IoTHubDeviceClient.create_from_connection_string(
-        'HostName=TransformerCoilGuard.azure-devices.net;DeviceId=TCG_Gateway;SharedAccessKey=rLG7ePO'
-        '+BFC60BgpdxKkX1pH3KuD0o2CUQJSxNh9CF8=')
-    print('Connecting Azure IoT Center...')
-    azureClient.connect()
-    print('Connected to Azure IoT Center')
 
     while True:
         # 15000 data/s
-        U, I = acquire_ui(1000, rate=15000)
+        U, I = acquire_ui(1000, rate=15000, fake_data=True)
         X, Y = lissajous_figure_calc(U, I, 15000, 50, 1000)
-
-        data_dict = {
-            'lissajous': {
-                'X': X.tolist(),
-                'Y': Y.tolist()
-            },
-            'voltages': U,
-            'currents': I
-        }
-        data_payload = json.dumps(data_dict)
-        msg = Message(data_payload)
-        msg.content_type = 'application/json'
-        msg.content_encoding = 'utf-8'
-        azureClient.send_message(msg)
-        print('Sent', msg)
 
         plt.subplot(221)
         plt.title('Sampling U & I')
@@ -93,4 +70,4 @@ if __name__ == '__main__':
 
         plt.show()
 
-        time.sleep(600)
+        time.sleep(2)
